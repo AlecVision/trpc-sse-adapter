@@ -4,6 +4,16 @@ Because tRPC transmits data as JSON, sending (and subscribing to) individual Ser
 
 </br>
 
+## Table of Contents
+
+- [Usage](#usage)
+  - [Adding the Adapter](#adding-the-adapter)
+  - [Creating SSE Stream Procedures](#creating-sse-stream-procedures)
+- [License](#license)
+- [Author](#author)
+
+</br>
+
 ## Usage
 
 > See [the `trpc-sse-link` package](https://github.com/alecvision/trpc-sse-link) for the client-side link needed to consume SSE streams.
@@ -137,7 +147,12 @@ export const chatRouter = createTRPCRouter({
 
 </br>
 
+## License
+
 ISC License (ISC)
 
-```
+</br>
 
+## Author
+
+Alec Helmturner
