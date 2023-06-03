@@ -460,3 +460,16 @@ function assertValidBatchInput(
   if (typeof x === "object" && x && !Array.isArray(x)) return;
   toss('"input" must be an object when doing a batch call', -32600);
 } */
+
+
+/* c8 ignore start */
+//@ts-expect-error - Vite handles this import.meta check
+if (import.meta.vitest) {
+  //@ts-expect-error - Vite handles this top-level await
+  const [{ describe }] = await Promise.all([import("vitest")]);
+  describe("sseRequestResolver", it => {
+    it("should work", async ({ expect }) => {
+      expect(true).toBe(true);
+    });
+  });
+}

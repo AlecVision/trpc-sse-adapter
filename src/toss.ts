@@ -37,3 +37,15 @@ export function toss(
     console.error(err);
     throw err;
   }
+
+  //@ts-expect-error - Vite handles this import.meta check
+if (import.meta.vitest) {
+    //@ts-expect-error - Vite handles this top-level await
+    const [{ describe }] = await Promise.all([import("vitest")]);
+    describe("toss", it => {
+      it("should work", async ({ expect }) => {
+        expect(true).toBe(true);
+      });
+    });
+  }
+  
