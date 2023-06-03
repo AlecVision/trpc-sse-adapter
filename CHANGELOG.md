@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.1](https://github.com/AlecVision/trpc-sse-adapter/compare/trpc-sse-adapter-v0.0.1...trpc-sse-adapter-v0.0.1) (2023-06-03)
+
+
+### Bug Fixes
+
+* add dummy tests ([e1b02bb](https://github.com/AlecVision/trpc-sse-adapter/commit/e1b02bb847bf5086550c110a6ee2e7b1d18b4004))
+
 ## 0.0.1 (2023-06-03)
 
 
