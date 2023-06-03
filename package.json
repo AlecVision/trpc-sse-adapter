@@ -1,0 +1,70 @@
+{
+  "name": "@alecvision/trpc-sse-adapter",
+  "version": "0.0.0",
+  "description": "A tRPC Fetch Adapter with support for Server-Sent Events (SSE)",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "enginesStrict": true,
+  "files": [
+    "dist/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "vitest --coverage --ui",
+    "test": "vitest run --coverage && vitest typecheck --run",
+    "build": "tsup",
+    "ci": "npm ci && npm run test && npm run build",
+    "release": "npm run ci && npm publish --access=public",
+    "clean": "rm -rf dist && rm -rf coverage && rm -rf node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alecvision/trpc-sse-adapter.git"
+  },
+  "keywords": [],
+  "author": "Alec Helmturner",
+  "license": "ISC",
+  "devDependencies": {
+    "@trpc/client": "^10.29.0",
+    "@vitest/coverage-c8": "^0.29.3",
+    "@vitest/ui": "^0.29.2",
+    "prettier": "^2.8.4",
+    "ts-node": "^10.9.1",
+    "tsup": "^6.6.3",
+    "typescript": "^5.0.2",
+    "vitest": "^0.29.3"
+  },
+  "peerDependencies": {
+    "@trpc/server": "^10.0.0"
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "none",
+    "arrowParens": "avoid",
+    "tabWidth": 2
+  },
+  "tsup": {
+    "minify": true,
+    "minifyIdentifiers": true,
+    "noExternal": [],
+    "external": [],
+    "skipNodeModulesBundle": true,
+    "treeshake": true,
+    "tsconfig": "tsconfig.json",
+    "define": {
+      "import.meta.vitest": "undefined"
+    },
+    "dts": true,
+    "entry": [
+      "./src/index.ts"
+    ],
+    "outDir": "./dist",
+    "format": [
+      "esm",
+      "cjs"
+    ]
+  }
+}

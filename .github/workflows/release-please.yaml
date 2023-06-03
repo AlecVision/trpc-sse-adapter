@@ -1,0 +1,36 @@
+name: release-please
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release-please:
+    permissions:
+      contents: write # to create release commit (google-github-actions/release-please-action)
+      pull-requests: write # to create release PR (google-github-actions/release-please-action)
+    runs-on: ubuntu-latest
+    name: Release, Please!
+    steps:
+      - name: Create release PR
+        uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          command: manifest
+      - uses: actions/checkout@v3
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "npm"
+        if: ${{ steps.release.outputs.release_created }}
+      - name: Publish to NPM
+        run: |
+          npm install npm@latest -g
+          npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: ${{ steps.release.outputs.release_created }}
