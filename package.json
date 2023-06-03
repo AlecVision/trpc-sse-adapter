@@ -1,6 +1,6 @@
 {
   "name": "@alecvision/trpc-sse-adapter",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A tRPC Fetch Adapter with support for Server-Sent Events (SSE)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
