@@ -269,7 +269,6 @@ export async function resolveSSEResponse<TRouter extends AnyRouter>(
         async start(controller) {
           const subscription = observable.subscribe({
             next: data => {
-              console.log(data);
               if (count === 0) sendEvent(controller, "START");
               sendEvent(controller, data);
             },
@@ -363,7 +362,6 @@ function getJsonContentTypeInputs(
   opts: Parameters<GetInputs>[0]
 ): ReturnType<GetInputs> {
   const rawInput = getRawProcedureInputOrThrow(opts);
-  console.log("GOT RAW INPUT: ", JSON.stringify(rawInput, null, 2));
   const transformer = opts.router._def._config.transformer;
 
   //TODO:if (!opts.isBatchCall) {

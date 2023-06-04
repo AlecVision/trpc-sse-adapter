@@ -28,17 +28,12 @@ export async function sseRequestHandler<TRouter extends AnyRouter>(
   const { pathname, searchParams } = new URL(req.url);
   const path = pathname.slice(endpoint.length + 1);
   const isBodyJSON = req.headers.get("Content-Type") === "application/json";
-  console.log("BODY IS JSON: ", isBodyJSON);
   const httpRequest: HTTPRequest = {
     query: searchParams,
     method: req.method,
     headers: Object.fromEntries(req.headers),
     body: isBodyJSON ? await req.text() : ""
   };
-  console.log(
-    "Handler received request: ",
-    JSON.stringify(httpRequest, null, 2)
-  );
 
   const result = await resolveSSEResponse({
     req: httpRequest,
