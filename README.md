@@ -32,7 +32,9 @@ There are two steps to implementing this adapter:
 </br>
 
 ### Adding the Adapter
------
+
+---
+
 This adapter ONLY handles requests for SSE streams. Batching of SSE Stream requests is not supported. Creating an SSE stream is as simple as creating a subscription procedure, just as you would with WebSockets - but tRPC doesn't know the difference between a WebSocket and an SSE stream. You must tell it which procedures are SSE streams and handle them accordingly. For example, using Next.js:
 
 ```ts
@@ -42,33 +44,33 @@ import { sseRequestHandler } from "@alecvision/trpc-sse-adapter";
 import { appRouter, createTRPCContext } from "../../../server";
 
 const SSE_PROCEDURE_PATTERNS = [
-    /ticker\.start$/,
-    /chatgpt\.generate$/,
-    /*
+  /ticker\.start$/,
+  /chatgpt\.generate$/,
+  /*
     prefixes/suffixes are an easy way to arbitrarily define SSE streams by giving
     them a special name (e.g. `myProcedure.stream_getSomeStreamingData`)
     */
-    /^.*\.stream_\w+$/
+  /^.*\.stream_\w+$/
 ];
 
+// This MUST return the same value as is returned by the equivalent client-side function
 function isStreamable(path: string) {
-  return SSE_PROCEDURE_PATTERNS.some((regex) => regex.test(path));
+  return SSE_PROCEDURE_PATTERNS.some(regex => regex.test(path));
 }
 
 // Vercel only supports SSE on the edge runtime (WebSockets are not supported at all)
 export const config = {
-  runtime: "edge",
+  runtime: "edge"
 };
 
 export default async function handler(req: NextRequest) {
-  
   if (isStreamable(req.nextUrl.pathname)) {
     // Accepts a subset of the options for the fetch adapter
     return sseRequestHandler({
       endpoint: "/api/trpc",
       router: appRouter,
       req,
-      createContext: createTRPCContext,
+      createContext: createTRPCContext
     });
   }
 
@@ -76,7 +78,7 @@ export default async function handler(req: NextRequest) {
     endpoint: "/api/trpc",
     router: appRouter,
     req,
-    createContext: createTRPCContext,
+    createContext: createTRPCContext
   });
 }
 
@@ -86,7 +88,9 @@ export default handler;
 </br>
 
 ### Creating SSE Stream Procedures
------
+
+---
+
 ```ts
 import { observable } from "@trpc/server/observable";
 import { OpenAI } from "openai-streams";
@@ -101,8 +105,8 @@ export const chatRouter = createTRPCRouter({
         messages: z.array(
           z.object({
             role: z.enum(["user", "system", "assistant"]),
-            content: z.string(),
-          }),
+            content: z.string()
+          })
         ),
         temperature: z.number().nullish(),
         top_p: z.number().nullish(),
@@ -114,34 +118,32 @@ export const chatRouter = createTRPCRouter({
           .record(z.string(), z.number().min(-100).max(100))
           .nullish(),
         stop: z.array(z.string()).nullish(),
-        user: z.string().nullish(),
-      }),
+        user: z.string().nullish()
+      })
     )
-    .subscription(
-      ({ input }) => {
-        return observable<string>((observer) => {
-          const abortController = new AbortController();
+    .subscription(({ input }) => {
+      return observable<string>(observer => {
+        const abortController = new AbortController();
 
-          void OpenAI("chat", input, {
-            controller: abortController,
-            apiKey: process.env.OPEN_AI_API_KEY,
-            onParse(token) {
-              observer.next(token);
-            },
-            onDone() {
-              observer.complete();
-            },
-          }).catch((err) => {
-            observer.error(err);
-          });
-
-          return () => {
-            abortController.abort();
+        void OpenAI("chat", input, {
+          controller: abortController,
+          apiKey: process.env.OPEN_AI_API_KEY,
+          onParse(token) {
+            observer.next(token);
+          },
+          onDone() {
             observer.complete();
-          };
+          }
+        }).catch(err => {
+          observer.error(err);
         });
-      },
-    ),
+
+        return () => {
+          abortController.abort();
+          observer.complete();
+        };
+      });
+    })
 });
 ```
 
