@@ -1,7 +1,7 @@
 import type { HTTPHeaders } from "@trpc/client";
 import {
-  AnyProcedure,
-  ProcedureRouterRecord,
+  type AnyProcedure,
+  type ProcedureRouterRecord,
   TRPCError,
   getTRPCErrorFromUnknown,
   inferRouterContext,
@@ -14,18 +14,18 @@ import {
 } from "@trpc/server";
 import {
   getHTTPStatusCode,
-  ResponseMeta,
-  type HTTPRequest
+  type ResponseMeta,
+  type HTTPRequest,
+  type HTTPBaseHandlerOptions
 } from "@trpc/server/http";
 import { isObservable } from "@trpc/server/observable";
 import {
-  TRPCResponse,
-  TRPCResponseMessage,
+  type TRPCResponse,
+  type TRPCResponseMessage,
   TRPC_ERROR_CODES_BY_KEY
 } from "@trpc/server/rpc";
 import { getErrorShape, transformTRPCResponse } from "@trpc/server/shared";
 import { toss } from "./toss";
-import { BaseHandlerOptions } from "@trpc/server/dist/internals/types";
 
 const HTTP_METHOD_PROCEDURE_TYPE_MAP: Record<
   string,
@@ -403,7 +403,7 @@ function callProcedure(opts: {
 interface ResolveSSERequestOptions<
   TRouter extends AnyRouter,
   TRequest extends HTTPRequest
-> extends BaseHandlerOptions<TRouter, TRequest> {
+> extends HTTPBaseHandlerOptions<TRouter, TRequest> {
   createContext: () => Promise<inferRouterContext<TRouter>>;
   req: TRequest;
   path: string;
