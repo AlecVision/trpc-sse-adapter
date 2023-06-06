@@ -1,99 +1,43 @@
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { sseRequestHandler } from "./sseHandler";
+import { resolveSSEResponse } from "./resolveSSEResponse";
 import type { AnyRouter } from "@trpc/server";
-import type { ProcedurePath } from "./types";
+import type { FetchHandlerRequestOptions } from "@trpc/server/adapters/fetch";
 
-export type SSEHandlerOptions<
-  TRouter extends AnyRouter,
-  THandler extends typeof fetchRequestHandler<TRouter> = typeof fetchRequestHandler<TRouter>
-> = Parameters<THandler>[0] & {
-  sseProcedurePaths: Set<ProcedurePath<TRouter>>;
-  sseEndpoint: string;
-};
+export async function sseRequestHandler<TRouter extends AnyRouter>(
+  opts: FetchHandlerRequestOptions<TRouter>
+): Promise<Response> {
+  const { endpoint, req, router, responseMeta, onError, createContext } = opts;
 
-export function withSSE<
-  TRouter extends AnyRouter,
-  THandler extends typeof fetchRequestHandler<TRouter> = typeof fetchRequestHandler<TRouter>
->(defaultHandler: THandler, opts: SSEHandlerOptions<TRouter, THandler>) {
-  const {
-    sseEndpoint = opts.endpoint,
-    sseProcedurePaths,
-    createContext,
-    onError,
-    responseMeta,
-    batching,
-    ...requiredOptionKeys
-  } = opts;
+  const resHeaders = new Headers();
 
-  const sharedOptions = {
-    ...(createContext && { createContext }),
-    ...(onError && { onError }),
-    ...(responseMeta && { responseMeta }),
-    ...(batching && { batching }),
-    ...requiredOptionKeys
+  const { pathname, searchParams } = new URL(req.url);
+  const path = pathname.slice(endpoint.length + 1);
+  const isBodyJSON = req.headers.get("Content-Type") === "application/json";
+  const httpRequest = {
+    query: searchParams,
+    method: req.method,
+    headers: Object.fromEntries(req.headers),
+    body: isBodyJSON ? await req.text() : ""
   };
 
-  const _handler = isStreamable(opts)
-    ? () => sseRequestHandler(sharedOptions)
-    : () => defaultHandler({ ...sharedOptions, endpoint: sseEndpoint });
+  //TODO: Clean this up after fetchRequestHandler is updated
+  const result = await resolveSSEResponse({
+    req: httpRequest,
+    path,
+    router,
+    ...(responseMeta && { responseMeta }),
+    createContext: async () => createContext?.({ req, resHeaders }),
+    onError: o => void onError?.({ ...o, req })
+  });
 
-  return _handler;
-}
-
-function isStreamable<TRouter extends AnyRouter>(
-  opts: SSEHandlerOptions<TRouter>
-) {
-  const {
-    sseEndpoint,
-    req,
-    sseProcedurePaths,
-    endpoint: defaultEndpoint
-  } = opts;
-
-  const url = new URL(req.url);
-  // Endpoint prefixes should only ever be at the start of the path, so String.replace is safe for removing them
-  const path = url.pathname
-    .replace(defaultEndpoint, "")
-    .replace(sseEndpoint, "");
-  const paths = url.searchParams.has("batching") ? path.split(",") : [path];
-
-  const method = req.method;
-  const ssePaths = sseProcedurePaths as Set<string>;
-
-  const hasSSEProcedures = paths.some(p => ssePaths.has(p));
-  const isBatch = paths.length > 1;
-  const isPATCH = method === "PATCH";
-
-  const [targetEndpoint, otherEndpoint] = isPATCH
-    ? [sseEndpoint, defaultEndpoint]
-    : [defaultEndpoint, sseEndpoint];
-
-  /**
-   * Good Non-SSE Requests:
-   * - !hasSSEProcedures && !isPATCH
-   *
-   * Bad Non-SSE Requests:
-   * - hasSSEProcedures && !isPATCH,
-   * - !hasSSEProcedures && isPATCH,
-   * - hasSSEProcedures && isPATCH && isBatch
-   */
-  if (hasSSEProcedures !== isPATCH) {
-    throw new Error(
-      "SSE procedures MUST use PATCH requests, non-SSE procedures MUST NOT"
-    );
+  for (const [key, value] of Object.entries(result.headers ?? {})) {
+    if (typeof value === "string") resHeaders.set(key, value);
+    if (Array.isArray(value)) value.forEach(v => resHeaders.append(key, v));
   }
 
-  if (!url.pathname.startsWith(targetEndpoint)) {
-    throw new Error(
-      `${method} request was routed to the wrong endpoint. Expected ${targetEndpoint}, got ${otherEndpoint}`
-    );
-  }
-
-  if (isPATCH && isBatch) {
-    throw new Error("Batching SSE procedure calls is not supported");
-  }
-
-  return isPATCH;
+  return new Response(result.body, {
+    status: result.status,
+    headers: resHeaders
+  });
 }
 
 /* c8 ignore start */
